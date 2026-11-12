@@ -570,4 +570,12 @@ loadH().then(h=>{if(h){H=h;readH(false)}});
 let LASTMOD=0;const _ub=useBuf;useBuf=function(b,n,m){_ub(b,n,m);LASTMOD=m||0};
 async function autoSync(){if(!H||document.hidden)return;try{if(await H.queryPermission({mode:'read'})!=='granted')return;const f=await H.getFile();if(f.lastModified!==LASTMOD)readH(false)}catch(e){}}
 setInterval(autoSync,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoSync()});
+
+// 웹판(GitHub): 이 PC가 SharePoint Master를 5분마다 확인해 master.xlsx·meta.json으로 올림 → 여기서 1분마다 확인
+if(/^https?:/.test(location.protocol)){H=null;const ob=document.getElementById('sbOpen');if(ob)ob.style.display='none';const od=document.getElementById('sbOd');if(od){od.textContent='원본 엑셀 (SharePoint)';od.href='https://hurom.sharepoint.com/:x:/s/a___c398ba/IQB1NUVmsqRVSbi1bgWbJ0WdATt85z06uSBCl5LztAzDyqc';od.title='Master 원본을 엽니다 — 고치면 몇 분 안에 이 화면에 반영됩니다'}
+ let WM='';async function webRead(force){try{const m=await (await fetch('meta.json?'+Date.now(),{cache:'no-store'})).json();if(!force&&m.modified===WM)return;
+  sbRe.classList.add('spin');const b=await (await fetch('master.xlsx?'+Date.now(),{cache:'no-store'})).arrayBuffer();useBuf(b,'SharePoint Master',Date.parse(m.modified));WM=m.modified;
+  sst.innerHTML+=` · 서버 확인 ${hm(new Date(m.checked))}`}catch(e){setSt('Master를 못 읽음 — 잠시 뒤 「⟳ 동기화」를 눌러 주세요 ('+esc(e&&e.message||'')+')',1)}finally{sbRe.classList.remove('spin')}}
+ sbRe.onclick=()=>webRead(true);sbRe.title='SharePoint Master 최신본을 다시 읽음 (열어 두면 1분마다 저절로 확인)';
+ webRead(true);setInterval(()=>{if(!document.hidden)webRead(false)},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)webRead(false)});}
 </script></body></html>
