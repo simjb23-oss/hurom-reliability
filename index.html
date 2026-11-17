@@ -591,6 +591,6 @@ if(/^https?:/.test(location.protocol)){H=null;const ob=document.getElementById('
  let WM='';async function webRead(force){try{const m=await (await fetch('meta.json?'+Date.now(),{cache:'no-store'})).json();if(!force&&m.modified===WM)return;
   sbRe.classList.add('spin');const b=await (await fetch('master.xlsx?'+Date.now(),{cache:'no-store'})).arrayBuffer();useBuf(b,'SharePoint Master',Date.parse(m.modified));WM=m.modified;
   sst.innerHTML+=` · 서버 확인 ${hm(new Date(m.checked))}`}catch(e){setSt('Master를 못 읽음 — 잠시 뒤 「⟳ 동기화」를 눌러 주세요 ('+esc(e&&e.message||'')+')',1)}finally{sbRe.classList.remove('spin')}}
- sbRe.onclick=()=>webRead(true);sbRe.title='SharePoint Master 최신본을 다시 읽음 (열어 두면 1분마다 저절로 확인)';
- webRead(true);setInterval(()=>{if(!document.hidden)webRead(false)},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)webRead(false)});}
+ sbRe.onclick=()=>webRead(true);sbRe.title='SharePoint Master 최신본을 다시 읽음 (열어 두면 30초마다 저절로 확인)';
+ webRead(true);setInterval(()=>{if(!document.hidden)webRead(false)},30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)webRead(false)});}
 </script></body></html>
