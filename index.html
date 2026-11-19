@@ -362,7 +362,9 @@ document.querySelectorAll('.ng').forEach((b,i)=>b.style.animationDelay=(.3+i*.05
 drawNg();
 // 장비 가동
 const circ=2*Math.PI*30;
-const eqList=D.equip.map(e=>{const a=R.filter(r=>r.equip===e),act=a.filter(isRun);return {e,a,act,h:Math.max(0,...act.map(r=>r.hours||0))}}).sort((x,y)=>y.act.length-x.act.length);
+// 장비별 가동: 1시간 안에 끝나는 짧은 장비는 숨김 (김선희 님 요청 2026-11-19). 여기 없는 새 장비는 그대로 보임
+const EQ_HIDE=new Set(['내전압 시험기','누설전류계','파워테스터','주파수변환기','온도 기록계','RPM 측정기','저울','각도기','낙하시험기','연필경도시험기','푸쉬풀게이지','UTM','볼 임팩트 해머','오실로스코프','소음 진동 측정기']);
+const eqList=D.equip.filter(e=>!EQ_HIDE.has(e)).map(e=>{const a=R.filter(r=>r.equip===e),act=a.filter(isRun);return {e,a,act,h:Math.max(0,...act.map(r=>r.hours||0))}}).sort((x,y)=>y.act.length-x.act.length);
 document.getElementById('eqs').innerHTML=eqList.map(({e,a,act,h})=>{const u=Math.min(1,h/24);
 return `<button class="eq ${act.length?'live':'idle'} ${mv(e)}" data-e="${esc(e)}"><div class="ring"><svg width="74" height="74"><circle class="bgc" cx="37" cy="37" r="30"/>${act.length&&!h?'<circle class="fg nohr" cx="37" cy="37" r="30"/>':`<circle class="fg" cx="37" cy="37" r="30" stroke-dasharray="${circ}" stroke-dashoffset="${circ}" data-off="${circ*(1-u)}"/>`}</svg><div class="ic">${icon(e)}</div></div><b>${esc(e)}</b><div class="c">${act.length?`진행 ${act.length}건${h?' · '+Math.round(u*100)+'%':''}`:'대기'}${act.length&&!h?'<div class="c">가동 중(시간 미입력)</div>':''}</div></button>`}).join('');
 document.querySelectorAll('.eq').forEach((b,i)=>{b.style.animationDelay=(.3+i*.03)+'s';b.onclick=()=>openEquip(b.dataset.e)});
