@@ -138,7 +138,7 @@ body.dragover::after{content:"Master 엑셀을 여기에 놓으세요";position:
  <div class="card" style="animation-delay:.1s"><h2><span>모델별 현황 <small>누르면 장비별 진행</small></span><button class="addb" id="madd">+ 모델 추가</button></h2><div class="filt" id="mf" style="margin-bottom:10px"></div><div class="models" id="models"></div></div>
  <div class="card" style="animation-delay:.15s"><h2>NG 발생 <small id="ngc"></small></h2><div class="ng-list" id="ngs"></div></div>
 </div>
-<div class="card" style="animation-delay:.2s;margin-bottom:14px"><h2>장비별 가동 <small>진행 중 시험 기준 · 일일 가동 시간 ÷ 8h (엑셀 기준) · 같은 장비 동시 시험은 가장 긴 것 하나만 → 100% 넘지 않음</small></h2><div class="eqs" id="eqs"></div></div>
+<div class="card" style="animation-delay:.2s;margin-bottom:14px"><h2>장비별 가동 <small title="일일 가동 시간 ÷ 8h (엑셀 기준) · 같은 장비 동시 시험은 가장 긴 것 하나만 → 100% 넘지 않음" style="cursor:help">진행 중 시험 기준 ⓘ</small></h2><div class="eqs" id="eqs"></div></div>
 <div class="card" style="animation-delay:.25s"><h2>시험 목적별 진척도 <small>진행 중·예정이 있는 목적</small></h2><div class="purp" id="purp"></div></div>
 </div>
 <div id="modal"></div><div id="toast"></div>
@@ -308,13 +308,15 @@ const md=document.getElementById('modal');md.innerHTML=`<div class="mbox"><h3>${
 <label>분류<select id="mcat">${['원액기','블렌더','음식물처리기','티마스터','상업용','기타'].map(c=>`<option ${c===i.category?'selected':''}>${c}</option>`).join('')}</select></label>
 <label>엑셀에 적힌 다른 이름 <small>쉼표로 구분</small><input type="text" id="malias" value="${esc((i.aliases||[]).join(', '))}" placeholder="예: H500 (S01)"></label>
 <label>사진 주소 <small>붙여 넣어도 됨</small><input type="text" id="murl" value="${esc(i.image_src||(img.startsWith('http')?img:''))}" placeholder="https://..."></label></div></div>
-<div class="mact"><button class="x" id="mexp" title="곽두팔 models.json 형식">모델 목록 내려받기</button><span style="flex:1"></span><button class="x" id="mcancel">닫기</button><button class="mailbtn" id="msave">저장</button></div></div>`;
+<div class="sub" style="font-size:12px;margin:8px 0;padding:8px 10px;border-radius:8px;background:#fff7e6;color:#7a5200">여기서 저장하면 <b>이 PC에서만</b> 보입니다. 모든 사람 화면에 보이게 하려면 「엑셀 줄 복사」를 누르고 Master 엑셀 「모델 목록」 시트 맨 아래에 붙여 넣으세요(사진은 주소로 넣은 것만 같이 보입니다).</div>
+<div class="mact"><button class="x" id="mrow" title="모델 이름 · 분류 · 다른 이름 · 사진 주소 한 줄">엑셀 줄 복사</button><button class="x" id="mexp" title="곽두팔 models.json 형식">모델 목록 내려받기</button><span style="flex:1"></span><button class="x" id="mcancel">닫기</button><button class="mailbtn" id="msave">저장</button></div></div>`;
 md.classList.add('show');const setImg=u=>{img=u;document.getElementById('mdrop').innerHTML=`<img src="${esc(u)}"><input type="file" accept="image/*" id="mfile" hidden>`;bindFile()};
 const bindFile=()=>document.getElementById('mfile').onchange=async e=>{if(e.target.files[0])setImg(await shrink(e.target.files[0]))};bindFile();
 const dz=document.getElementById('mdrop');dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')};dz.ondragleave=()=>dz.classList.remove('over');
 dz.ondrop=async e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))setImg(await shrink(f))};
 document.getElementById('murl').onchange=e=>{const u=e.target.value.trim();if(/^https?:\/\//.test(u))setImg(u)};
 document.getElementById('mcancel').onclick=()=>md.classList.remove('show');md.onclick=e=>{if(e.target===md)md.classList.remove('show')};
+document.getElementById('mrow').onclick=()=>{const u=document.getElementById('murl').value.trim()||(img.startsWith('http')?img:'');const t=[document.getElementById('mname').value.trim(),document.getElementById('mcat').value,document.getElementById('malias').value.trim(),u].join('\t');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('복사함 — 엑셀 「모델 목록」 시트에 붙여 넣으세요'),()=>toast('복사 못 함: '+t))};
 document.getElementById('mexp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({models:allModels().map(({name,aliases,image,category})=>({name,aliases:aliases||[],image:image||'',category:category||''}))},null,1)],{type:'application/json'}));a.download='models.json';a.click()};
 document.getElementById('msave').onclick=()=>{const nm=document.getElementById('mname').value.trim();const nn=document.getElementById('mname');
 if(!nm){nn.classList.add('bad');nn.focus();return}
@@ -348,10 +350,10 @@ const purposes=[...new Set(a.filter(r=>r.status!=='완료').map(r=>r.purpose).fi
 function doneBtn(a){const n=a.filter(r=>r.status==='완료').length;return n?`<button class="donebtn" id="donebtn" data-n="${n}">완료 ${n}건 보기</button>`:''}
 function bindDone(){const el=document.getElementById('detail'),b=document.getElementById('donebtn');el.classList.toggle('hidedone',!!b);if(b)b.onclick=()=>{const h=el.classList.toggle('hidedone');b.textContent=h?`완료 ${b.dataset.n}건 보기`:`완료 ${b.dataset.n}건 접기`}}
 // 장비 → 모델별
-function openEquip(e){const a=R.filter(r=>r.equip===e);const g={};a.forEach(r=>(g[r.model]??=[]).push(r));
+function openEquip(e,all){const sel=new Set(SRC()),full=R.filter(r=>r.equip===e),a=all?full:full.filter(r=>sel.has(r)),hid=full.length-a.length; // 맨 위 「오늘 공유/전체 누적」 따라감const g={};a.forEach(r=>(g[r.model]??=[]).push(r));
 const ent=Object.entries(g).sort((x,y)=>y[1].filter(isRun).length-x[1].filter(isRun).length||y[1].filter(active).length-x[1].filter(active).length);
 showDetail(`<div class="dhead"><div style="display:flex;gap:12px;align-items:center"><div class="bx ${a.some(isRun)?'live':''} ${mv(e)}">${icon(e)}</div><div><h3>${esc(e)}</h3>${dk(a)}</div></div><button class="x">닫기</button></div>`+
-(ent.map(([m,t])=>`<div class="eqrow ${t.some(isRun)?'':'off'} ${t.every(r=>r.status==='완료')?'alldone':''}"><div class="eqn"><div><b>${esc(m)}</b><span>시험 ${t.length} · 진행 ${t.filter(isRun).length}</span></div></div><div class="tests">${t.sort(byStatus).map(testRow).join('')}</div></div>`).join('')||'<div class="sub" style="padding:8px 0">이 장비로 한 시험 없음</div>')+doneBtn(a));bindDone()}
+(ent.map(([m,t])=>`<div class="eqrow ${t.some(isRun)?'':'off'} ${t.every(r=>r.status==='완료')?'alldone':''}"><div class="eqn"><div><b>${esc(m)}</b><span>시험 ${t.length} · 진행 ${t.filter(isRun).length}</span></div></div><div class="tests">${t.sort(byStatus).map(testRow).join('')}</div></div>`).join('')||'<div class="sub" style="padding:8px 0">'+(hid?'오늘 공유한 시험 없음':'이 장비로 한 시험 없음')+'</div>')+doneBtn(a)+(hid?`<button class="donebtn" id="allbtn">${all?'금일 공유 시험만 보기':`금일 공유 외 시험 ${hid}건 더보기`}</button>`:''));bindDone();const ab=document.getElementById('allbtn');if(ab)ab.onclick=()=>openEquip(e,!all)}
 // NG (맨 위 전환 따라감, NEW는 오늘 들어온 건만)
 const isNew=r=>[r.recv,r.end].some(d=>d&&String(d).slice(0,10)===TODAY);
 function drawNg(){const ng=SRC().filter(r=>r.status==='NG').sort((x,y)=>(y.recv||'').localeCompare(x.recv||'')),all=R.filter(r=>r.status==='NG').length;
@@ -364,7 +366,7 @@ drawNg();
 const circ=2*Math.PI*30;
 // 장비별 가동: 1시간 안에 끝나는 짧은 장비는 숨김 (김선희 님 요청 2026-11-19). 여기 없는 새 장비는 그대로 보임
 const EQ_HIDE=new Set(['내전압 시험기','누설전류계','파워테스터','주파수변환기','온도 기록계','RPM 측정기','저울','각도기','낙하시험기','연필경도시험기','푸쉬풀게이지','UTM','볼 임팩트 해머','오실로스코프','소음 진동 측정기']);
-const eqList=D.equip.filter(e=>!EQ_HIDE.has(e)).map(e=>{const a=R.filter(r=>r.equip===e),act=a.filter(isRun);return {e,a,act,h:Math.max(0,...act.map(r=>r.hours||0))}}).sort((x,y)=>y.act.length-x.act.length);
+const eqList=D.equip.filter(e=>!EQ_HIDE.has(e)).map(e=>{const a=R.filter(r=>r.equip===e),act=a.filter(isRun);return {e,a,act,h:Math.max(0,...act.map(r=>r.hours||0))}}).sort((x,y)=>y.act.length-x.act.length||y.h-x.h); // 건수 같으면 가동률 높은 순
 document.getElementById('eqs').innerHTML=eqList.map(({e,a,act,h})=>{const u=Math.min(1,h/8); // 엑셀과 같은 8시간 기준, 같은 장비 동시 시험은 가장 긴 것 하나 (김선희 님 2026-11-19)
 return `<button class="eq ${act.length?'live':'idle'} ${mv(e)}" data-e="${esc(e)}"><div class="ring"><svg width="74" height="74"><circle class="bgc" cx="37" cy="37" r="30"/>${act.length&&!h?'<circle class="fg nohr" cx="37" cy="37" r="30"/>':`<circle class="fg" cx="37" cy="37" r="30" stroke-dasharray="${circ}" stroke-dashoffset="${circ}" data-off="${circ*(1-u)}"/>`}</svg><div class="ic">${icon(e)}</div></div><b>${esc(e)}</b><div class="c">${act.length?`진행 ${act.length}건${h?' · '+Math.round(u*100)+'%':''}`:'대기'}${act.length&&!h?'<div class="c">가동 중(시간 미입력)</div>':''}</div></button>`}).join('');
 document.querySelectorAll('.eq').forEach((b,i)=>{b.style.animationDelay=(.3+i*.03)+'s';b.onclick=()=>openEquip(b.dataset.e)});
@@ -550,13 +552,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
 const MODELS=D0.models||[],RECIP=(D0.mail&&D0.mail.recipients)||[];
 const one1=v=>v==null?null:String(v).split(/\s+/).filter(Boolean).join(' ')||null,numv=(...v)=>{for(const x of v){if(x!=null&&x!==''&&!isNaN(Number(x)))return Number(x)}return null};
+// 엑셀 「모델 목록」 시트(있으면): 모델 이름 · 분류 · 엑셀에 적힌 다른 이름 · 사진 주소 → 모든 사람 화면에 같이 보임
+const MSHEET='모델 목록';
+function sheetModels(wb){const s=wb.Sheets[MSHEET];if(!s)return [];const a=XLSX.utils.sheet_to_json(s,{header:1,defval:null});const h=(a[0]||[]).map(x=>String(x||'').replace(/\s+/g,''));
+ const ix=k=>h.findIndex(x=>x.includes(k)),iN=ix('모델'),iC=ix('분류'),iA=ix('다른이름'),iP=ix('사진');if(iN<0)return [];
+ return a.slice(1).map(r=>({name:one1(r[iN]),category:iC>=0?one1(r[iC])||'':'',aliases:iA>=0?String(r[iA]||'').split(',').map(x=>x.trim()).filter(Boolean):[],image:iP>=0?one1(r[iP])||'':''})).filter(m=>m.name)}
+function mergeModels(base,add){const n=x=>String(x||'').replace(/\s+/g,'').toLowerCase(),out=base.map(m=>({...m}));
+ add.forEach(m=>{const o=out.find(x=>n(x.name)===n(m.name));if(o){if(m.category)o.category=m.category;if(m.aliases.length)o.aliases=[...new Set([...(o.aliases||[]),...m.aliases])];if(m.image)o.image=m.image}else out.push(m)});return out}
+let MCUR=MODELS;
 function toD(d,label){return {rows:d.tests.filter(t=>t.item).map(t=>({purpose:t.purpose,model:one1(t.model_key||t.model)||'미정',recv:t.received,due:t.due,item:t.item,equip:one1(t.equipment),hours:numv(t.daily_hours),unit:t.unit,target:numv(t.target_num,t.target),cum:numv(t.cumulative_num,t.cumulative),prog:numv(t.progress),end:t.end_date,status:t.status,note:t.note,share:t.share_today})),
- equip:d.equipment_list,asof:label,mail:d.mail,purpose:d.by_purpose||{},models:MODELS}}
+ equip:d.equipment_list,asof:label,mail:d.mail,purpose:d.by_purpose||{},models:MCUR}}
 const sst=document.getElementById('sst'),sbRe=document.getElementById('sbRe');
 const setSt=(h,warn)=>{sst.innerHTML=h;sst.classList.toggle('warn',!!warn)};
 const hm=d=>d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
 var useBuf=function(buf,name,mod){const wb=XLSX.read(buf,{cellDates:true});if(!wb.Sheets['진행 현황'])throw new Error('「진행 현황」 시트가 없는 파일');
- const d=buildReliability(wb,MODELS,RECIP);D=toD(d,hm(new Date())+' 엑셀에서 읽음');boot();
+ MCUR=mergeModels(MODELS,sheetModels(wb));const d=buildReliability(wb,MCUR,RECIP);D=toD(d,hm(new Date())+' 엑셀에서 읽음');boot();
  {const nc=d.tests.filter(t=>t.progress_calc).length;setSt(`<b>${esc(name)}</b> 읽음 · 엑셀 저장 ${mod?hm(new Date(mod)):'-'} · 시험 ${d.tests.length}건`+(nc?` · 수식 값 없음 → 누적÷목표로 계산 ${nc}건 (엑셀을 다른 프로그램으로 저장했는지 확인)`:''),nc>0)}};
 // 고른 파일 기억 (Edge·Chrome: 파일 핸들을 IndexedDB에)
 const idb=(mode,fn)=>new Promise((ok,no)=>{const q=indexedDB.open('rel_dash',1);q.onupgradeneeded=()=>q.result.createObjectStore('h');q.onerror=()=>no(q.error);q.onsuccess=()=>{const tx=q.result.transaction('h',mode),r=fn(tx.objectStore('h'));tx.oncomplete=()=>ok(r&&r.result);tx.onerror=()=>no(tx.error)}});
