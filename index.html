@@ -279,7 +279,7 @@ document.querySelectorAll('.kpi').forEach((k,i)=>{k.style.cursor='pointer';k.tit
 function openStatus(s){const a=SRC().filter(r=>r.status===s),g={};a.forEach(r=>(g[minfo(r.model).name||r.model||'모델 미기재']??=[]).push(r));
 const ent=Object.entries(g).sort((x,y)=>y[1].length-x[1].length||x[0].localeCompare(y[0]));
 showDetail(`<div class="dhead"><div><h3><span class="dot" style="background:${ST[s][1]};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px"></span>${esc(s)} ${a.length}건</h3><div class="sub">${kmode==='오늘'?'오늘 공유(Y) 시험':'전체 누적 시험'} · 모델 ${ent.length}개</div></div><button class="x">닫기</button></div>`+
-(ent.map(([m,t])=>`<div class="sec">${esc(m)} · ${t.length}건</div><div class="tests">${t.sort((x,y)=>(x.purpose||'').localeCompare(y.purpose||'')).map(r=>`<div style="font-size:12px;color:#2f6b4f;margin:6px 0 2px">📌 ${one(r.purpose||'목적 미기재')}${r.equip?' · '+one(r.equip):''}</div>`+testRow(r)).join('')}</div>`).join('')||'<div class="sub" style="padding:8px 0">해당 시험 없음</div>'));document.getElementById('detail').classList.remove('hidedone')}
+(ent.map(([m,t])=>`<div class="sec">${esc(m)} · ${t.length}건</div><div class="tests">${t.sort((x,y)=>(x.purpose||'').localeCompare(y.purpose||'')).map(r=>`<div style="font-size:12px;color:#2f6b4f;margin:6px 0 2px">📌 ${one(r.purpose||'목적 미기재')}${r.equip?' · '+one(r.equip):''}</div>`+testRow(r)).join('')}</div>`).join('')||'<div class="sub" style="padding:8px 0">해당 시험 없음</div>'),1);document.getElementById('detail').classList.remove('hidedone')}
 function drawAll(){drawKpi();if(typeof drawModels==='function'){drawModels();drawNg();drawPurp()}}
 drawKpi();
 // 모델 (엑셀 모델 + models.json 사진·분류 + 화면에서 추가/고친 것)
@@ -338,7 +338,7 @@ function testRow(r){const p=pct(r),s=ST[r.status]||ST['진행 중지'];const tgt
 const sub=[tgt,r.end?'종료 '+r.end:'',r.note||''].filter(Boolean).map(one).join(' · ');
 return `<div class="tr ${r.status==='NG'?'isng':''} ${r.status==='완료'?'st-done':''}"><div class="nm"><div title="${one(r.item)}"><span class="tag t-${s[0]}">${esc(r.status)}</span> ${one(r.item)}</div><small title="${sub}">${sub||'&nbsp;'}</small></div><div class="bar"><i data-w="${p==null?0:p*100}%" style="background:${s[1]}"></i></div><div class="pc">${p==null?'-':Math.round(p*100)+'%'}</div></div>`}
 const byStatus=(x,y)=>ORDER.indexOf(x.status)-ORDER.indexOf(y.status);
-function showDetail(html){const el=document.getElementById('detail');el.classList.remove('show');void el.offsetWidth;el.innerHTML=html;el.classList.add('show');
+function showDetail(html,top){const el=document.getElementById('detail');const at=top?document.getElementById('kpis'):document.querySelector('.grid2');if(top)at.after(el);else at.before(el);el.classList.remove('show');void el.offsetWidth;el.innerHTML=html;el.classList.add('show');
 el.querySelectorAll('.x:not(#medit)').forEach(b=>b.onclick=()=>{el.classList.remove('show');document.querySelectorAll('.m').forEach(b=>b.classList.remove('on'))});const me=el.querySelector('#medit');if(me)me.onclick=()=>modelForm(me.dataset.m);
 el.querySelectorAll('.eqrow').forEach((r,i)=>r.style.animationDelay=(i*.06)+'s');el.scrollIntoView({behavior:'smooth',block:'start'});fill()}
 function dk(a){const c=cnt(a);return `<div class="dk">${ORDER.map(s=>`<span>${s}<b style="color:${ST[s][1]}">${c[s]}</b></span>`).join('')}</div>`}
