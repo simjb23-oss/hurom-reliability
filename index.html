@@ -273,7 +273,13 @@ function drawKpi(){const src=SRC(),C=cnt(src);
 document.getElementById('kpis').innerHTML=ORDER.map((s,i)=>`<div class="card kpi k-${ST[s][0]}" style="animation-delay:${i*.05}s"><div class="l"><span class="dot" style="background:${ST[s][1]}"></span>${s}</div><div class="n" data-to="${C[s]}">0</div></div>`).join('');
 document.querySelectorAll('.kpi .n').forEach((e,i)=>{setTimeout(()=>{countUp(e,+e.dataset.to);setTimeout(()=>e.classList.add('pop'),900)},i*120)});
 document.getElementById('kmode').innerHTML=['오늘','누적'].map(f=>`<button class="${f===kmode?'on':''}">${f==='오늘'?'오늘 공유 ('+R.filter(isShare).length+')':'전체 누적 ('+R.length+')'}</button>`).join('');
-document.querySelectorAll('#kmode button').forEach((b,i)=>b.onclick=()=>{kmode=i?'누적':'오늘';drawAll()})}
+document.querySelectorAll('#kmode button').forEach((b,i)=>b.onclick=()=>{kmode=i?'누적':'오늘';drawAll()});
+document.querySelectorAll('.kpi').forEach((k,i)=>{k.style.cursor='pointer';k.title=ORDER[i]+' 시험 보기';k.onclick=()=>openStatus(ORDER[i])})}
+// 숫자 카드 → 그 상태 시험을 모델별로 (김선희 님 요청 11-23)
+function openStatus(s){const a=SRC().filter(r=>r.status===s),g={};a.forEach(r=>(g[minfo(r.model).name||r.model||'모델 미기재']??=[]).push(r));
+const ent=Object.entries(g).sort((x,y)=>y[1].length-x[1].length||x[0].localeCompare(y[0]));
+showDetail(`<div class="dhead"><div><h3><span class="dot" style="background:${ST[s][1]};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px"></span>${esc(s)} ${a.length}건</h3><div class="sub">${kmode==='오늘'?'오늘 공유(Y) 시험':'전체 누적 시험'} · 모델 ${ent.length}개</div></div><button class="x">닫기</button></div>`+
+(ent.map(([m,t])=>`<div class="sec">${esc(m)} · ${t.length}건</div><div class="tests">${t.sort((x,y)=>(x.purpose||'').localeCompare(y.purpose||'')).map(r=>`<div style="font-size:12px;color:#2f6b4f;margin:6px 0 2px">📌 ${one(r.purpose||'목적 미기재')}${r.equip?' · '+one(r.equip):''}</div>`+testRow(r)).join('')}</div>`).join('')||'<div class="sub" style="padding:8px 0">해당 시험 없음</div>'));document.getElementById('detail').classList.remove('hidedone')}
 function drawAll(){drawKpi();if(typeof drawModels==='function'){drawModels();drawNg();drawPurp()}}
 drawKpi();
 // 모델 (엑셀 모델 + models.json 사진·분류 + 화면에서 추가/고친 것)
