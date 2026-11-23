@@ -134,12 +134,12 @@ body.dragover::after{content:"Master 엑셀을 여기에 놓으세요";position:
 <div class="src"><button class="sb go" id="sbRe" title="Master 엑셀을 지금 다시 읽음 (열어 두면 1분마다 저절로 확인) — Excel에서 열려 있으면 닫고 누르세요">⟳ 동기화</button><a class="sb" id="sbOd" href="https://hurom.sharepoint.com/sites/a___c398ba/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2Fa___c398ba%2FShared%20Documents%2FT_03_%EC%8B%A0%EB%A2%B0%EC%84%B1%C2%B7%EC%8B%9C%ED%97%98%2F%EC%8B%A0%EB%A2%B0%EC%84%B1%20%EC%8B%9C%ED%97%98%20%ED%98%84%ED%99%A9" target="_blank" rel="noopener" title="SharePoint 폴더가 열리면 위쪽 「동기화」(또는 「내 파일에 바로 가기 추가」)를 한 번 누르면 Master가 이 PC에 늘 최신으로 받아집니다" style="text-decoration:none">☁ OneDrive 동기화 설정</a><button class="sb" id="sbOpen" title="처음 한 번만 고르면 다음부터 열 때마다 자동으로 읽음 — OneDrive 폴더면 Master 파일에 「항상 이 장치에 유지」를 켜 두세요">Master 엑셀 열기</button><span class="st" id="sst"></span><input type="file" id="sfile" accept=".xlsx,.xlsm" hidden></div>
 <div class="filt kmode" id="kmode"></div><div class="kpis" id="kpis"></div>
 <div id="detail" class="card"></div>
+<div class="card" style="animation-delay:.08s;margin-bottom:14px"><h2>시험 목적별 진척도 <small>메인 시험 항목 전체 진행률 · 진행 중·예정이 있는 목적</small></h2><div class="purp" id="purp"></div></div>
 <div class="grid2">
  <div class="card" style="animation-delay:.1s"><h2><span>모델별 현황 <small>누르면 장비별 진행</small></span><button class="addb" id="madd">+ 모델 추가</button></h2><div class="filt" id="mf" style="margin-bottom:10px"></div><div class="models" id="models"></div></div>
  <div class="card" style="animation-delay:.15s"><h2>NG 발생 <small id="ngc"></small></h2><div class="ng-list" id="ngs"></div></div>
 </div>
 <div class="card" style="animation-delay:.2s;margin-bottom:14px"><h2>장비별 가동 <small title="일일 가동 시간 ÷ 8h (엑셀 기준) · 같은 장비 동시 시험은 가장 긴 것 하나만 → 100% 넘지 않음" style="cursor:help">진행 중 시험 기준 ⓘ</small></h2><div class="eqs" id="eqs"></div></div>
-<div class="card" style="animation-delay:.25s"><h2>시험 목적별 진척도 <small>진행 중·예정이 있는 목적</small></h2><div class="purp" id="purp"></div></div>
 </div>
 <div id="modal"></div><div id="toast"></div>
 <script>
