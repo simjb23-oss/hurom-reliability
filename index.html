@@ -227,7 +227,7 @@ function openMailDraft(mail) {
 document.getElementById('home').onclick=()=>{try{const kb=document.querySelector('#kmode button');if(kb)kb.click()}catch(e){}boot();document.getElementById('pick')&&document.getElementById('pick').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'})};
 function boot(){document.getElementById('detail').classList.remove('show');
 // 받는 사람 고르기 = 곽두팔 mail_button.js (고정 3명 + 품질 후보 + 직접 추가)
-document.getElementById('pick').innerHTML='<div id="rcpt"></div><button class="mailbtn go" id="gob2" title="Outlook 새 메일이 바로 뜨고 받는 사람·제목·요약이 써집니다. 전체 표는 복사돼 있으니 본문에서 Ctrl+V">Outlook으로 메일 쓰기</button> <button class="mailbtn" id="gob" title="본문(표 포함)까지 채운 메일 파일 — 클래식 Outlook에서 바로 보낼 수 있음">메일 파일 받기 (클래식 Outlook)</button><div class="sub" style="margin-top:6px;font-size:12px">버튼을 누르면 받는 사람·제목·표가 채워진 Outlook 메일 작성 창이 열립니다.</div>';
+document.getElementById('pick').innerHTML='<div id="rcpt"></div><button class="mailbtn go" id="gob2" title="파일을 내려받지 않고 Outlook 새 메일이 바로 열립니다. 본문은 복사돼 있으니 Ctrl+V">Outlook으로 바로 쓰기</button> <button class="mailbtn" id="gob" title="본문(표 포함)까지 채운 메일 파일 — 클래식 Outlook에서 바로 보낼 수 있음">메일 파일 받기 (클래식 Outlook)</button><div class="sub" style="margin-top:6px;font-size:12px">「바로 쓰기」 → 받는 사람·제목이 채워진 새 메일이 열려요. 본문 칸에서 <b>Ctrl+V</b> 하면 양식 그대로 들어가요.</div>';
 document.getElementById('mailbtn').onclick=()=>{if(!D.mail)return;renderRecipientPicker(document.getElementById('rcpt'),D.mail);document.getElementById('pick').classList.toggle('show')};
 function mailSummary(m){const d=document.createElement('div');d.innerHTML=m.html.replace(/<br[^>]*>/gi,' ');const T=x=>(x&&x.textContent||'').replace(/\s+/g,' ').trim();
  const ps=[...d.querySelectorAll('p')].map(T);const sum=(ps.find(x=>/진행 중:/.test(x))||'').replace(/: /g,' ').replace(/건/g,'');const ng=T([...d.querySelectorAll('h3')].find(h=>/NG/.test(h.textContent))?.nextElementSibling);
@@ -236,7 +236,7 @@ function mailSummary(m){const d=document.createElement('div');d.innerHTML=m.html
  let n=rows.length,body;do{body=head.concat(rows.slice(0,n),n<rows.length?['  외 '+(rows.length-n)+'건']:[],tail).join('\r\n');n--}while(encodeURIComponent(body).length>1800&&n>=0);return body}
 document.getElementById('gob2').onclick=()=>{const m=D.mail,pk=(m._picks||loadPicks(m)).filter(r=>r.on),to=pk.filter(r=>r.field!=='cc').map(r=>r.email),cc=pk.filter(r=>r.field==='cc').map(r=>r.email);const body='<html><head><meta charset="utf-8"></head><body>'+m.html+'</body></html>';const go=()=>{location.href='mailto:'+to.join(';')+'?'+(cc.length?'cc='+cc.join(';')+'&':'')+'subject='+encodeURIComponent(m.subject)+'&body='+encodeURIComponent(mailSummary(m));document.getElementById('pick').classList.remove('show')};try{navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([body],{type:'text/html'}),'text/plain':new Blob([m.subject],{type:'text/plain'})})]).then(go,go)}catch(e){go()}};
 document.getElementById('gob').onclick=()=>{openMailDraft(D.mail);document.getElementById('pick').classList.remove('show')};
-document.getElementById('gob2').onclick=document.getElementById('gob').onclick;document.getElementById('gob').style.display='none';
+document.getElementById('gob2').onclick=()=>{const m=D.mail,pk=(m._picks||loadPicks(m)).filter(r=>r.on),to=pk.filter(r=>r.field!=='cc').map(r=>r.email),cc=pk.filter(r=>r.field==='cc').map(r=>r.email);const body='<html><head><meta charset="utf-8"></head><body>'+m.html+'</body></html>';const go=ok=>{location.href='mailto:'+to.join(';')+'?'+(cc.length?'cc='+cc.join(';')+'&':'')+'subject='+encodeURIComponent(m.subject);document.getElementById('pick').classList.remove('show');toast(ok?'메일 창이 열리면 본문에 Ctrl+V — 양식 그대로 들어갑니다':'본문 복사를 못 했어요 — 「메일 파일 받기」를 써 주세요')};try{navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([body],{type:'text/html'}),'text/plain':new Blob([m.subject],{type:'text/plain'})})]).then(()=>go(1),()=>go(0))}catch(e){go(0)}};
 if(!D.mail)document.getElementById('mailbtn').style.display='none';
 const ST={'진행 중':['run','var(--g)'],'진행 예정':['wait','var(--wait)'],'완료':['done','var(--done)'],'NG':['ng','var(--ng)'],'진행 중지':['stop','var(--stop)']};
 const ORDER=['진행 중','NG','진행 예정','진행 중지','완료']; // 곽두팔 sort_rank와 같은 순서
@@ -487,69 +487,55 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return data;
   }
 
-  /* 메일 본문 — 11/11 김선희 메일 구성(요약→NG→목적별 진척도→장비 가동률→진행 중→완료) */
+  /* 메일 본문 — 11/23 김선희 님 양식(.eml) 그대로: 인사·대시보드 버튼 → 전체 진행현황(목적별 막대) → 상태 요약 → NG · 진행 중지 → 진행 중 표 → 완료 표 */
   function buildMail(d, recipients) {
     const T = d.tests.filter(t => t.share_today);
-    const e = v => (v === null || v === undefined || v === "") ? "-"
-      : String(v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    const md = s => (s && /^\d{4}-\d\d-\d\d/.test(s)) ? (+s.slice(5, 7)) + "/" + (+s.slice(8, 10)) : e(s);
+    const blank = v => v === null || v === undefined || v === "";
+    const e = v => blank(v) ? "" : String(v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const en = v => e(v).replace(/\r?\n/g, "<br>");
     const n = v => typeof v === "number" ? String(+v.toFixed(6)) : e(v);
     const unit = t => (t.unit && t.unit !== "-") ? e(t.unit) : "";
-    const cnt = (rs, s) => rs.filter(t => t.status === s).length;
-    const bar = p => {
-      p = Math.max(0, Math.min(100, p || 0));
-      return '<div style="background:#eee;border-radius:4px;width:140px;height:10px;display:inline-block;vertical-align:middle">'
-        + '<div style="background:' + (p >= 100 ? "#2e7d32" : "#43a047") + ";width:" + p.toFixed(0) + '%;height:10px;border-radius:4px"></div></div> ' + p.toFixed(1) + "%";
-    };
-        const NV = "#1f3864", BD = "border:1px solid #bfbfbf;";
-    const SC = { "진행 중": "#2e75b6", "진행 예정": "#bf8f00", "완료": "#548235", "NG": "#c00000", "진행 중지": "#7f7f7f" };
-    const blank = v => v === null || v === undefined || v === "";
-    const en = v => blank(v) ? "" : e(v).replace(/\r?\n/g, "<br>");
     const nu = (v, t) => blank(v) ? "" : n(v) + unit(t);
-    const TH = 'style="background:' + NV + ';color:#fff;padding:8px 6px;font-size:12px;text-align:center;' + BD + '"';
-    const TD = a => 'style="' + BD + 'padding:7px 8px;font-size:12px;vertical-align:middle;text-align:' + a + '"';
-    const table = (head, rows, mid) => '<table style="border-collapse:collapse;width:100%;margin:6px 0 22px"><tr>'
-      + head.map(h => "<th " + TH + ">" + h + "</th>").join("") + "</tr>"
-      + rows.map(cells => "<tr>" + cells.map((c, i) => "<td " + TD(mid.includes(i) ? "center" : "left") + ">" + c + "</td>").join("") + "</tr>").join("") + "</table>";
-    const H = s => '<p style="color:' + NV + ';font-size:14px;font-weight:bold;margin:22px 0 8px">' + s + "</p>";
-    const pc = p => p >= 100 ? "#70ad47" : p >= 70 ? "#a9d18e" : p >= 30 ? "#ffd966" : "#ed7d31";
-    const tc = p => p >= 70 ? "#548235" : p >= 30 ? "#bf8f00" : "#c55a11";
-    const pbar = p => { p = Math.max(0, Math.min(100, p || 0));
-      return '<table width="100%" style="border-collapse:collapse;border:1px solid #bfbfbf;background:#e7e6e6"><tr>'
-        + (p > 0 ? '<td width="' + p.toFixed(0) + '%" style="background:' + pc(p) + ';height:14px;padding:0;font-size:1px">&nbsp;</td>' : "")
-        + (p < 100 ? '<td style="height:14px;padding:0;font-size:1px">&nbsp;</td>' : "") + "</tr></table>"; };
-    const rate = t => t.daily_hours_num > 0 ? Math.round(Math.min(100, t.daily_hours_num / 24 * 100)) : 0;
-    const rcell = r => r > 0 ? '<table width="100%" style="border-collapse:collapse"><tr><td style="background:' + pc(r) + ';color:#fff;font-weight:bold;text-align:center;padding:4px;font-size:11px">' + r + "%</td></tr></table>" : "-";
-    const st = s => s === "NG" ? '<b style="color:#c00000">NG</b>' : e(s);
-    const out = ['<div style="font-family:Malgun Gothic,Arial;max-width:1100px;color:#222">',
-      '<table style="border-collapse:collapse;width:100%;margin:4px 0 18px"><tr><td style="background:#fff2cc;border-left:5px solid #bf9000;padding:12px 16px;font-size:13px">'
-      + "<b>🌿 금일 요약</b><br><br>진행 중: " + cnt(T, "진행 중") + "건 &nbsp;/&nbsp; 진행 예정: " + cnt(T, "진행 예정") + "건 &nbsp;/&nbsp; 완료: " + cnt(T, "완료") + '건 &nbsp;/&nbsp; NG: <b style="color:#c00000">' + cnt(T, "NG") + "</b>건</td></tr></table>"];
-    const ng = T.filter(t => t.status === "NG");
-    if (ng.length) out.push(H("🚨 NG 발생 현황"), table(["시험 모델", "시험 목적", "시험 항목", "특이사항"], ng.map(t => [en(t.model), en(t.purpose), en(t.item), en(t.note)]), []));
+    const cnt = (rs, s) => rs.filter(t => t.status === s).length;
+    const F = "font-family:'맑은 고딕',Arial,sans-serif;";
+    const URL_ = "https://simjb23-oss.github.io/hurom-reliability/";
+    const col = p => p >= 100 ? ["#258A45", "#258A45"] : p >= 70 ? ["#258A45", "#5CA46E"] : p >= 30 ? ["#BF9000", "#D6A514"] : ["#C65911", "#ED7D31"];
+    const out = ['<div style="margin:12px 0 20px 0;' + F + '"><div style="margin-bottom:12px;font-size:13px;line-height:1.6;color:#333333;">안녕하세요.<br>금일 신뢰성 시험 진행현황을 공유드립니다.</div>'
+      + '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px 0;"><tr><td bgcolor="#258A45" style="background:#258A45;padding:11px 24px;text-align:center;"><a href="' + URL_ + '" target="_blank" style="color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:bold;">신뢰성 시험 진행현황 대시보드 바로가기</a></td></tr></table>'
+      + '<div style="margin:0;font-size:12px;color:#777777;line-height:1.5;">※ 매일 18:30 기준 현황이며, 상세 및 누적 현황은 상단 대시보드에서 확인 가능합니다.</div></div>'];
+    out.push('<div style="margin-top:20px;' + F + 'color:#333333;"><div style="margin:0 0 16px 0;padding-bottom:7px;border-bottom:2px solid #258A45;font-size:17px;font-weight:bold;color:#222222;">전체 진행현황</div>');
     const P = {};
     T.forEach(t => { const k = t.purpose || "(미기재)"; (P[k] = P[k] || []).push(t); });
-    out.push(H("🌸 시험 목적별 종합 진척도 🦋"), table(["시험 목적", "접수일자", "완료 요구일", "세부 시험", "상태별 건수", "종합 진척도"],
-      Object.entries(P).map(([p, ts]) => { const v = Number((d.by_purpose[p] && d.by_purpose[p].progress_today) || 0); return [e(p),
-        [...new Set(ts.map(t => md(t.received)))].sort().join("<br>"),
-        [...new Set(ts.map(t => md(t.due)))].sort().join("<br>"),
-        "<b>전체 " + ts.length + "건</b>" + Object.keys(SC).filter(s => cnt(ts, s)).map(s => '<br><span style="color:' + SC[s] + '">' + s + " " + cnt(ts, s) + "건</span>").join(""),
-        "진행 중 " + cnt(ts, "진행 중") + " / 예정 " + cnt(ts, "진행 예정") + "<br>완료 " + cnt(ts, "완료") + " / NG " + cnt(ts, "NG"),
-        '<div style="text-align:center;font-weight:bold;color:' + tc(v) + ';margin-bottom:4px">' + (+v.toFixed(1)) + "%</div>" + pbar(v)]; }), [1, 2, 3]));
-    const E = {};
-    T.filter(t => t.status === "진행 중" && t.equipment).forEach(t => { (E[t.equipment] = E[t.equipment] || []).push(t); });
-    const cards = Object.entries(E).map(([k, ts]) => [k, ts, Math.max(...ts.map(rate))]).filter(x => x[2] > 0).map(([k, ts, r]) =>
-      '<td style="padding:0 12px 12px 0;vertical-align:top"><table style="border-collapse:collapse;width:360px;border:1px solid #a9a9a9">'
-      + '<tr><td style="background:#70ad47;color:#fff;font-weight:bold;text-align:center;padding:8px;font-size:13px">' + e(k) + "</td></tr>"
-      + '<tr><td style="background:#f3f8ee;text-align:center;padding:10px 10px 4px;font-size:12px"><b style="color:#548235;font-size:14px">' + r + '%</b><br><span style="color:#595959">진행 시험 ' + ts.length + "건</span></td></tr>"
-      + '<tr><td style="background:#f3f8ee;padding:4px 10px 12px">' + pbar(r) + "</td></tr></table></td>");
-    const cr = [];
-    for (let i = 0; i < cards.length; i += 3) cr.push("<tr>" + cards.slice(i, i + 3).join("") + "</tr>");
-    out.push(H("⚙️ 시험 장비별 현재 가동률 📊"), cards.length ? '<table style="border-collapse:collapse;margin:4px 0 10px">' + cr.join("") + "</table>" : '<p style="font-size:12px">-</p>');
-    const HD = ["시험 모델", "시험 목적", "시험 항목", "진행 상태", "목표", "누적 진행", "특이사항", "시험장비명", "시험장비 가동률"];
-    const row = t => [en(t.model), en(t.purpose), en(t.item), st(t.status), nu(t.target, t), nu(t.cumulative, t), en(t.note), en(t.equipment), t.status === "진행 중" ? rcell(rate(t)) : "-"];
-    out.push(H("🧪 진행 중 시험 📈"), table(HD, T.filter(t => ["진행 중", "NG", "진행 예정"].includes(t.status)).map(row), [3, 4, 5, 8]));
-    const done = T.filter(t => t.status === "완료");
-    out.push(H("📊 완료 시험 ✨"), done.length ? table(HD, done.map(row), [3, 4, 5, 8]) : '<p style="font-size:12px">-</p>', "</div>");return { subject: "[일일 현황] 신뢰성 시험 진행현황_" + iso(new Date()), recipients, html: out.join("") };
+    const cell = (w, bg) => '<td width="' + w + '%" bgcolor="' + bg + '" style="width:' + w + '%;height:10px;padding:0;background:' + bg + ';font-size:0;line-height:10px;">&nbsp;</td>';
+    Object.entries(P).forEach(([p, ts]) => {
+      const v = Math.max(0, Math.min(100, Number((d.by_purpose[p] && d.by_purpose[p].progress_today) || 0))), c = col(v), lab = (+v.toFixed(1)) + "%";
+      out.push('<div style="margin:0 0 18px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;table-layout:fixed;">'
+        + '<tr><td style="padding:0 12px 6px 0;font-size:13px;font-weight:bold;line-height:1.5;color:#222222;text-align:left;word-wrap:break-word;">' + e(p) + '</td><td width="85" style="width:85px;padding:0 0 6px 0;font-size:14px;font-weight:bold;color:' + c[0] + ';text-align:right;white-space:nowrap;">' + lab + "</td></tr>"
+        + '<tr><td colspan="2" style="padding:0 0 6px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;table-layout:fixed;background:#E2E6E3;"><tr>'
+        + (v > 0 ? cell(v, c[1]) : "") + (v < 100 ? cell(100 - v, "#E2E6E3") : "") + "</tr></table></td></tr>"
+        + '<tr><td colspan="2" style="padding:0;font-size:11px;line-height:1.5;color:#666666;text-align:right;">전체 ' + ts.length + "건 · 진행 " + cnt(ts, "진행 중") + " · 예정 " + cnt(ts, "진행 예정") + " · 완료 " + cnt(ts, "완료") + " · NG " + cnt(ts, "NG") + "</td></tr></table></div>");
+    });
+    const SC = [["진행 중", "#258A45"], ["NG", "#D64545"], ["진행 예정", "#BF9000"], ["진행 중지", "#A6A6A6"], ["완료", "#7F8C8D"]];
+    out.push('<div style="margin:22px 0 0 0;padding:13px 15px;background:#F3F6F4;border-left:4px solid #258A45;font-size:13px;line-height:1.8;color:#333333;"><b>상태 요약</b> &nbsp;&nbsp; '
+      + SC.map(([s, c]) => '<span style="color:' + c + ';">●</span> ' + s + " <b>" + cnt(T, s) + "건</b>").join(" &nbsp;|&nbsp; ") + "</div></div>");
+    const box = (title, tc, bg, bd, rs) => rs.length ? '<div style="margin:12px 0;padding:14px 16px;background:' + bg + ";border-left:5px solid " + bd + ";" + F + 'font-size:13px;"><b style="color:' + tc + ';">' + title + '</b><ol style="margin:10px 0 0 20px;">'
+      + rs.map(t => '<li style="margin-bottom:12px;"><b>' + e(t.model) + " / " + e(t.item) + "</b><br>시험 목적: " + en(t.purpose) + "<br>특이사항: " + (en(t.note) || "-") + "</li>").join("") + "</ol></div>" : "";
+    out.push(box("⚠️ NG 발생 현황", "#C00000", "#FCE4D6", "#C00000", T.filter(t => t.status === "NG")));
+    out.push(box("⏸ 진행 중지 현황", "#666666", "#F2F2F2", "#A6A6A6", T.filter(t => t.status === "진행 중지")));
+    const W = [9, 16, 12, 7, 7, 9, 17, 11, 12], HD = ["시험 모델", "시험 목적", "시험 항목", "진행 상태", "목표", "누적 진행", "특이사항", "시험장비명", "시험장비 가동률"], MID = [3, 4, 5, 8];
+    const rate = t => t.status === "진행 중" && t.daily_hours_num > 0 ? Math.round(Math.min(100, t.daily_hours_num / 8 * 100)) : 0;
+    const rcell = (t, r) => !t.equipment ? "-" : '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;min-width:110px;border-collapse:collapse;border:1px solid #BFBFBF;"><tr><td width="100%" style="width:100%;height:25px;padding:0 5px;background:'
+      + (r > 0 ? "#70AD47;color:#FFFFFF" : "#E7E6E6;color:#595959") + ';font-size:11px;font-weight:bold;text-align:center;vertical-align:middle;white-space:nowrap;">' + (r > 0 ? r + "%" : "가동 0%") + "</td></tr></table>";
+    const TDs = a => 'style="border:1px solid #D9D9D9;padding:7px;text-align:' + a + ';vertical-align:top;word-wrap:break-word;overflow-wrap:break-word;"';
+    const table = (title, rs) => '<div style="margin-top:20px;' + F + '"><p style="font-size:14px;font-weight:bold;color:#17365D;">' + title + "</p>"
+      + (rs.length ? '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed;"><thead><tr>'
+      + HD.map((h, i) => '<th style="width:' + W[i] + '%;border:1px solid #A6A6A6;padding:7px;background:#17365D;color:#FFFFFF;text-align:center;vertical-align:middle;">' + h + "</th>").join("") + "</tr></thead><tbody>"
+      + rs.map(t => '<tr style="background:' + (t.status === "NG" ? "#F4CCCC" : t.status === "진행 중지" ? "#E7E6E6" : "#FFFFFF") + ';">'
+        + [en(t.model), en(t.purpose), en(t.item), e(t.status), nu(t.target, t), nu(t.cumulative, t), en(t.note), en(t.equipment) || "-", rcell(t, rate(t))]
+          .map((c, i) => "<td " + TDs(MID.includes(i) ? "center" : "left") + ">" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table>" : '<p style="font-size:12px">-</p>') + "</div>";
+    out.push(table("🧪 진행 중 시험 📈", T.filter(t => t.status !== "완료")));
+    out.push(table("📊 완료 시험 ✨", T.filter(t => t.status === "완료")));
+    return { subject: "[일일 현황] 신뢰성 시험 진행현황_" + iso(new Date()), recipients, html: out.join("") };
   }
 
   G.buildReliability = buildReliability;
